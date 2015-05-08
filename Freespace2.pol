@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+
+TITLE="Freespace 2"
+PREFIX="Freespace2"
+URL="http://gog.com/gamecard/freespace_2"
+AUTHOR="Volition / Interplay"
+PACKAGER="neersighted"
+GOGID="freespace_2"
+GAME_VMS="32"
+WINEVERSION="1.7.41"
+
+# Check for PlayOnLinux.
+[ "$PLAYONLINUX" = "" ] && exit 0
+# Load PlayOnLinux functions.
+source "$PLAYONLINUX/lib/sources"
+
+# Load images for wizard.
+POL_GetSetupImages "http://files.playonlinux.com/resources/setups/Freespace2_gog/top.jpg" "http://files.playonlinux.com/resources/setups/Freespace2_gog/left.jpg" "$TITLE"
+# Set up wizard.
+POL_SetupWindow_Init
+# Set up debugging.
+POL_Debug_Init
+
+# Start wizard with game information.
+POL_SetupWindow_presentation "$TITLE" "$AUTHOR" "$URL" "$PACKAGER" "$PREFIX"
+
+# Create a new wineprefix.
+POL_System_SetArch "x86"
+POL_Wine_SelectPrefix "$PREFIX"
+POL_Wine_PrefixCreate "$WINEVERSION"
+
+# Get GPU memory.
+POL_SetupWindow_VMS $GAME_VMS
+# Tell Wine about the video driver.
+POL_Wine_SetVideoDriver
+
+# Game-specific fixes.
+Set_OS "winxp" # Run in XP-compatibility mode.
+
+# Install dependencies.
+POL_Call POL_Install_nop "$WINEPREFIX/drive_c/windows/system32/sdbinst.exe" # Fake sdbinst.
+
+# Download the game
+POL_Call POL_GoG_setup "$GOGID" "2870b98722a1e56a360e3a959019e678"
+# Install the game.
+POL_Call POL_GoG_install "/nogui"
+
+# A fake reboot doesn't hurt.
+POL_Wine_reboot
+
+# Create shortcuts.
+POL_Shortcut "fs2.exe" "$TITLE" "$TITLE.png" ""
+
+# And now're we're done.
+POL_SetupWindow_Close
+exit

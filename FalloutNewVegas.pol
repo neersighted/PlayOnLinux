@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+
+TITLE="Fallout: New Vegas"
+PREFIX="FalloutNewVegas"
+URL="http://fallout.bethsoft.com"
+AUTHOR="Bethesda Softworks"
+PACKAGER="neersighted"
+STEAMID="22380"
+GAME_VMS="256"
+WINEVERSION="1.7.41"
+
+# Check for PlayOnLinux.
+[ "$PLAYONLINUX" = "" ] && exit 0
+# Load PlayOnLinux functions.
+source "$PLAYONLINUX/lib/sources"
+
+# Load images for wizard.
+POL_GetSetupImages "http://files.playonlinux.com/resources/setups/FNV/top.jpg" "http://files.playonlinux.com/resources/setups/FNV/left.jpg" "$TITLE"
+# Set up wizard.
+POL_SetupWindow_Init
+# Set up debugging.
+POL_Debug_Init
+
+# Start wizard with game information.
+POL_SetupWindow_presentation "$TITLE" "$AUTHOR" "$URL" "$PACKAGER" "$PREFIX"
+
+# Create a new wineprefix.
+POL_System_SetArch "x86"
+POL_Wine_SelectPrefix "$PREFIX"
+POL_Wine_PrefixCreate "$WINEVERSION"
+
+# Get GPU memory.
+POL_SetupWindow_VMS $GAME_VMS
+# Tell Wine about the video driver.
+POL_Wine_SetVideoDriver
+
+# Game-specific fixes.
+Set_OS "winxp" # Run in XP-compatibility mode.
+POL_Wine_X11Drv "GrabFullscreen" "Y" # Always grab fullscreen mode.
+
+# Install dependencies.
+POL_Call POL_Install_vcrun2010
+POL_Call POL_Install_dxfullsetup
+POL_Call POL_Install_quartz
+# Mark dependencies as installed.
+POL_Call POL_Install_steam_flags "$STEAMID"
+
+# Install Steam.
+POL_SetupWindow_message "After Steam installs, please uncheck the 'Run Steam' box." "$TITLE"
+POL_Call POL_Install_steam
+# Install the game.
+POL_SetupWindow_message "Please exit Steam (Steam > Exit) when the download is finished." "$TITLE"
+cd "$WINEPREFIX/drive_c/$PROGRAMFILES/Steam"
+POL_Wine start /unix "steam.exe" steam://install/$STEAM_ID
+POL_Wine_WaitExit "$TITLE"
+
+# A fake reboot doesn't hurt.
+POL_Wine_reboot
+
+# Create shortcuts.
+POL_Shortcut "steam.exe" "$TITLE" "$TITLE.png" "steam://rungameid/$STEAMID"
+POL_Shortcut "steam.exe" "Steam ($TITLE)" "" ""
+
+# And now're we're done.
+POL_SetupWindow_Close
+exit
